@@ -33,7 +33,7 @@ app/
 │   │   ├── java/com/example/pointcloudviewer/
 │   │   │   ├── CameraController.kt     # 處理視角變換（旋轉、縮放、平移）
 │   │   │   ├── LegendView.kt 		    # 用於繪製顏色漸層圖例
-│   │   │  	├── MainActivity.kt         # 主要活動與使用者互動
+│   │   │   ├── MainActivity.kt 		# 主要活動與使用者互動
 │   │   │   ├── PointCloudRenderer.kt   # OpenGL 渲染實作
 │   │   │   └── LidarPoint.kt          # 點雲數據模型
 │   │   └── res/
