@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # StellarApp
 
 
@@ -90,3 +91,101 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+=======
+# 點雲觀測器 Point Cloud Viewer
+
+基於 Android OpenGL 的即時 3D 點雲視覺化應用程式，可模擬 LiDAR 點雲數據。
+
+## 功能特色
+
+- 即時 3D 點雲視覺化
+- 模擬 16 線 LiDAR 感測器數據
+- 互動式 3D 視角控制：
+    - 雙指縮放
+    - 單指旋轉
+    - 雙擊重置視圖
+- 座標軸切換
+- 支援最多 500 萬個點
+- 灰階強度視覺化
+- 漸進式點雲載入
+
+## 技術細節
+
+### 點雲生成
+- 模擬 16 線 LiDAR 感測器
+- 生成點雲數據：
+    - XYZ 座標
+    - 強度值 (128-255)
+    - 垂直角度範圍：-15° 至 15°
+    - 360° 水平覆蓋
+
+### 渲染
+- OpenGL ES 2.0
+- 自定義頂點和片段著色器
+- 基於點的渲染與強度著色
+- 座標軸視覺化
+
+### 效能
+- 漸進式載入點雲（每次更新 50,000 個點）
+- 最大容量：500 萬個點
+- 高效的頂點緩衝區管理
+- 優化的矩陣轉換
+
+## 專案結構
+
+```
+app/
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/pointcloudviewer/
+│   │   │   ├── MainActivity.kt         # 主要 UI 與互動處理
+│   │   │   ├── PointCloudRenderer.kt   # OpenGL 渲染實現
+│   │   │   └── LidarPoint.kt          # 點雲數據模型
+│   │   └── res/
+│   │       └── layout/
+│   │           └── activity_main.xml   # 主要活動布局
+├── build.gradle
+└── README.md
+```
+
+## 安裝與建置
+
+1. 複製專案儲存庫
+2. 在 Android Studio 中開啟專案
+3. 在支援 OpenGL ES 2.0 的裝置上建置並運行
+
+## 使用說明
+
+1. 啟動應用程式
+2. 點雲將開始漸進式載入
+3. 與視覺化互動：
+    - 單指拖曳旋轉視圖
+    - 雙指縮放
+    - 雙擊重置視圖
+4. 使用「座標軸」按鈕切換座標軸顯示
+5. 使用「重置視圖」按鈕重置視角
+
+## 系統需求
+
+- Android 4.4 (API level 19) 或更高版本
+- 支援 OpenGL ES 2.0
+- 支援觸控螢幕的裝置
+
+## 相依套件
+
+- AndroidX Core 和 AppCompat 程式庫
+- OpenGL ES 2.0
+- Kotlin 運行環境
+
+## 授權條款
+
+本專案採用 MIT 授權條款 - 詳見 LICENSE 檔案
+
+## 參與貢獻
+
+1. Fork 專案儲存庫
+2. 建立功能分支
+3. 提交更改
+4. 推送至分支
+5. 建立新的 Pull Request
+>>>>>>> 914e10e (Initial commit)
