@@ -39,7 +39,7 @@ android {
 }
 
 dependencies {
-
+    // 現有依賴
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -49,4 +49,11 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // 添加必要的依賴
+    implementation("androidx.drawerlayout:drawerlayout:1.2.0")  // DrawerLayout 支持
+
+    // 如果 LegendView 使用自定義視圖，可能需要這些
+    implementation("androidx.activity:activity-ktx:1.9.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.0")
 }

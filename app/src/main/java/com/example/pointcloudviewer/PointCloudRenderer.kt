@@ -13,7 +13,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class PointCloudRenderer : GLSurfaceView.Renderer {
-    // 每個點： x, y, z, intensity, color(r,g,b)
     private val maxPoints = 850000
     private val pointsPerUpdate = 850000
     private val floatsPerPoint = 7
@@ -26,13 +25,12 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
     private var isInitialized = false
     private var isReadyToRender = false
 
-    // 座標軸相關
     private var showAxis = true
+    private var showGrid = true
     private lateinit var axisPosBuffer: FloatBuffer
     private lateinit var axisColorBuffer: FloatBuffer
     private var axisProgram = 0
 
-    // 新增網格平面相關
     private lateinit var gridBuffer: FloatBuffer
     private var gridProgram: Int = 0
     private var gridVertexCount: Int = 0
@@ -48,30 +46,24 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
     private var scaleFactor = 1.0f
     private var rotateX = 0.0f
     private var rotateY = 0.0f
-    private var translateX = 0.0f  // 添加平移 X
-    private var translateY = 0.0f  // 添加平移 Y
+    private var translateX = 0.0f
+    private var translateY = 0.0f
 
-    // 色彩模式：0 = 強度, 1 = 深度, 2 = 原始顏色
     private var currentColorMode = 0
 
     companion object {
         private const val TAG = "PointCloudRenderer"
     }
 
-    // 座標軸資料（每個頂點：前三為座標，後四為顏色）
     private val axisVertices = floatArrayOf(
-        // x 軸 (紅色)
         0f, 0f, 0f, 1f, 0f, 0f, 1f,
         1f, 0f, 0f, 1f, 0f, 0f, 1f,
-        // y 軸 (綠色)
         0f, 0f, 0f, 0f, 1f, 0f, 1f,
         0f, 1f, 0f, 0f, 1f, 0f, 1f,
-        // z 軸 (藍色)
         0f, 0f, 0f, 0f, 0f, 1f, 1f,
         0f, 0f, 1f, 0f, 0f, 1f, 1f
     )
 
-    //【頂點著色器】增加傳出 vDepth（即 z 座標）
     private val vertexShaderCodeStr = """
         uniform mat4 uMVPMatrix;
         attribute vec3 aPosition;
@@ -89,13 +81,12 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         }
     """.trimIndent()
 
-    //【片段著色器】依據 uColorMode 決定顏色
     private val fragmentShaderCodeStr = """
         precision mediump float;
         varying float vIntensity;
         varying vec3 vColor;
         varying float vDepth;
-        uniform int uColorMode; // 0: 強度, 1: 深度, 2: 顏色
+        uniform int uColorMode;
         void main() {
             if(uColorMode == 0) {
                 float normalizedIntensity = clamp(vIntensity / 255.0, 0.0, 1.0);
@@ -115,7 +106,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         }
     """.trimIndent()
 
-    // 座標軸著色器（保持不變）
     private val axisVertexShaderCodeStr = """
         uniform mat4 uMVPMatrix;
         attribute vec3 aPosition;
@@ -135,7 +125,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         }
     """.trimIndent()
 
-    // 網格平面著色器（與軸線相同）
     private val gridVertexShaderCode = """
         uniform mat4 uMVPMatrix;
         attribute vec3 aPosition;
@@ -260,7 +249,7 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 5f, 0f, 0f, 0f, 0f, 1f, 0f)
         Matrix.setIdentityM(modelMatrix, 0)
-        Matrix.translateM(modelMatrix, 0, translateX, translateY, 0f)  // 應用平移
+        Matrix.translateM(modelMatrix, 0, translateX, translateY, 0f)
         Matrix.rotateM(modelMatrix, 0, rotateX, 1f, 0f, 0f)
         Matrix.rotateM(modelMatrix, 0, rotateY, 0f, 1f, 0f)
         Matrix.scaleM(modelMatrix, 0, scaleFactor, scaleFactor, scaleFactor)
@@ -268,10 +257,8 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
 
-        drawGrid()
-        if (isReadyToRender) {
-            drawPointCloud()
-        }
+        if (showGrid) drawGrid()
+        if (isReadyToRender) drawPointCloud()
         if (showAxis) drawAxis()
 
         val frameTime = System.currentTimeMillis() - startTime
@@ -406,8 +393,8 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
     }
 
     private fun generateGridVertices(): FloatArray {
-        val gridMin = -5f
-        val gridMax = 5f
+        val gridMin = -100f
+        val gridMax = 100f
         val step = 1f
         val lines = mutableListOf<Float>()
         var x = gridMin
@@ -449,10 +436,9 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         scaleFactor = scaleFactor.coerceIn(0.1f, 5.0f)
     }
 
-    fun translate(dx: Float, dy: Float) {  // 新增平移方法
-        translateX += dx * 0.01f / scaleFactor  // 根據縮放調整平移速度
+    fun translate(dx: Float, dy: Float) {
+        translateX += dx * 0.01f / scaleFactor
         translateY += dy * 0.01f / scaleFactor
-        // 可選：限制平移範圍
         translateX = translateX.coerceIn(-5f, 5f)
         translateY = translateY.coerceIn(-5f, 5f)
     }
@@ -461,7 +447,7 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         scaleFactor = 1.0f
         rotateX = 0f
         rotateY = 0f
-        translateX = 0f  // 重置平移
+        translateX = 0f
         translateY = 0f
     }
 
@@ -470,6 +456,14 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
     }
 
     fun isAxisVisible(): Boolean = showAxis
+
+    fun setAxisVisibility(visible: Boolean) {
+        showAxis = visible
+    }
+
+    fun setGridVisibility(visible: Boolean) {
+        showGrid = visible
+    }
 
     fun setColorMode(mode: Int) {
         currentColorMode = mode
