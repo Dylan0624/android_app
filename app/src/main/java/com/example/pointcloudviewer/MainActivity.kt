@@ -46,7 +46,6 @@ class MainActivity : AppCompatActivity() {
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         rootLayout.addView(glSurfaceView)
 
-        // 按鈕選單區塊
         val buttonLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.TOP or Gravity.END
@@ -81,7 +80,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     2 -> {
                         text = "色彩模式: 顏色"
-                        legendView.mode = 2  // 隱藏圖例或維持不變
+                        legendView.mode = 2
                     }
                 }
             }
@@ -92,12 +91,11 @@ class MainActivity : AppCompatActivity() {
         buttonLayout.addView(colorModeButton)
         rootLayout.addView(buttonLayout)
 
-        // 新增圖例視圖，放在畫面底部
         legendView = LegendView(this)
         val legendLayoutParams = FrameLayout.LayoutParams(350, 100)
         legendLayoutParams.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         legendView.layoutParams = legendLayoutParams
-        legendView.mode = renderer.getColorMode()  // 初始模式
+        legendView.mode = renderer.getColorMode()
         rootLayout.addView(legendView)
 
         setContentView(rootLayout)
@@ -113,14 +111,21 @@ class MainActivity : AppCompatActivity() {
     private fun setupGestureDetectors() {
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-                renderer.rotate(distanceX, distanceY)
+                if (e2.pointerCount == 1) {
+                    renderer.rotate(distanceX, distanceY)  // 單指旋轉
+                } else {
+                    renderer.translate(-distanceX, distanceY)  // 多指平移
+
+                }
                 return true
             }
+
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 renderer.resetView()
                 return true
             }
         })
+
         scaleGestureDetector = ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
             override fun onScale(detector: ScaleGestureDetector): Boolean {
                 renderer.scale(detector.scaleFactor)

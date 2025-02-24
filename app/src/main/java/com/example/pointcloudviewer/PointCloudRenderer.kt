@@ -48,6 +48,8 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
     private var scaleFactor = 1.0f
     private var rotateX = 0.0f
     private var rotateY = 0.0f
+    private var translateX = 0.0f  // 添加平移 X
+    private var translateY = 0.0f  // 添加平移 Y
 
     // 色彩模式：0 = 強度, 1 = 深度, 2 = 原始顏色
     private var currentColorMode = 0
@@ -97,15 +99,12 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         void main() {
             if(uColorMode == 0) {
                 float normalizedIntensity = clamp(vIntensity / 255.0, 0.0, 1.0);
-                // 低強度為綠色，高強度為紅色，中間內插（可透過 yellow 過渡）
                 vec3 intensityColor = mix(vec3(0.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), normalizedIntensity);
                 gl_FragColor = vec4(intensityColor, 1.0);
             } else if(uColorMode == 1) {
-                // 使用傳入的深度 vDepth，假設範圍約為 -0.3 ~ 0.3
                 const float minDepth = -0.3;
                 const float maxDepth = 0.3;
                 float normalizedDepth = clamp((vDepth - minDepth) / (maxDepth - minDepth), 0.0, 1.0);
-                // 低深度顯示藍色，高深度顯示紅色，中間過渡到紫色
                 gl_FragColor = vec4(normalizedDepth, 0.0, 1.0 - normalizedDepth, 1.0);
             } else if(uColorMode == 2) {
                 vec3 mappedColor = (vColor + vec3(1.0)) * 0.5;
@@ -156,7 +155,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         }
     """.trimIndent()
 
-    // 產生點雲資料，強度依 x 座標由大到小設定（假設 x 範圍約 -1~1）
     fun generateSimulatedPointsBatch(): FloatArray {
         val batch = FloatArray(pointsPerUpdate * floatsPerPoint)
         val rings = 32
@@ -166,16 +164,13 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
             val verticalAngle = -15f + (ring * 1f)
             for (i in 0 until pointsPerRing) {
                 val horizontalAngle = (i.toFloat() / pointsPerRing) * 360f
-                // 距離仍隨機，但保持在 0.5 ~ 1.0 之間
                 val distance = 0.5f + Math.random().toFloat() * 0.5f
                 val rad_h = Math.toRadians(horizontalAngle.toDouble())
                 val rad_v = Math.toRadians(verticalAngle.toDouble())
                 val x = (distance * cos(rad_v) * cos(rad_h)).toFloat()
                 val y = (distance * cos(rad_v) * sin(rad_h)).toFloat()
                 val z = (distance * sin(rad_v)).toFloat()
-                // 強度依 x 由大到小：假設 x∈[-1,1]，則 intensity = ((x+1)/2)*255
                 val intensity = ((x + 1f) / 2f) * 255f
-                // 以法向量模擬顏色（保留原本）
                 val norm = if (distance != 0f) distance else 1f
                 val nx = x / norm
                 val ny = y / norm
@@ -246,7 +241,7 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         initGridShaders()
         setupPointCloud()
         setupAxisBuffers()
-        setupGrid() // 建立網格平面資料
+        setupGrid()
         Matrix.setIdentityM(modelMatrix, 0)
         isInitialized = true
         Log.i(TAG, "Surface created, OpenGL initialized")
@@ -265,6 +260,7 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 5f, 0f, 0f, 0f, 0f, 1f, 0f)
         Matrix.setIdentityM(modelMatrix, 0)
+        Matrix.translateM(modelMatrix, 0, translateX, translateY, 0f)  // 應用平移
         Matrix.rotateM(modelMatrix, 0, rotateX, 1f, 0f, 0f)
         Matrix.rotateM(modelMatrix, 0, rotateY, 0f, 1f, 0f)
         Matrix.scaleM(modelMatrix, 0, scaleFactor, scaleFactor, scaleFactor)
@@ -272,9 +268,7 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
 
-        // 先畫網格平面
         drawGrid()
-
         if (isReadyToRender) {
             drawPointCloud()
         }
@@ -411,13 +405,11 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         axisColorBuffer.position(0)
     }
 
-    // 產生並建立網格平面資料：在 XY 平面 (z=0)，範圍 -5 到 5，間距 1
     private fun generateGridVertices(): FloatArray {
         val gridMin = -5f
         val gridMax = 5f
         val step = 1f
         val lines = mutableListOf<Float>()
-        // 垂直線：固定 x，y 從 gridMin 到 gridMax
         var x = gridMin
         while (x <= gridMax) {
             lines.add(x); lines.add(gridMin); lines.add(0f)
@@ -426,7 +418,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
             lines.add(0.7f); lines.add(0.7f); lines.add(0.7f); lines.add(1f)
             x += step
         }
-        // 水平線：固定 y，x 從 gridMin 到 gridMax
         var y = gridMin
         while (y <= gridMax) {
             lines.add(gridMin); lines.add(y); lines.add(0f)
@@ -458,10 +449,20 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         scaleFactor = scaleFactor.coerceIn(0.1f, 5.0f)
     }
 
+    fun translate(dx: Float, dy: Float) {  // 新增平移方法
+        translateX += dx * 0.01f / scaleFactor  // 根據縮放調整平移速度
+        translateY += dy * 0.01f / scaleFactor
+        // 可選：限制平移範圍
+        translateX = translateX.coerceIn(-5f, 5f)
+        translateY = translateY.coerceIn(-5f, 5f)
+    }
+
     fun resetView() {
         scaleFactor = 1.0f
         rotateX = 0f
         rotateY = 0f
+        translateX = 0f  // 重置平移
+        translateY = 0f
     }
 
     fun toggleAxis() {
@@ -470,7 +471,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
 
     fun isAxisVisible(): Boolean = showAxis
 
-    // 色彩模式相關
     fun setColorMode(mode: Int) {
         currentColorMode = mode
     }
