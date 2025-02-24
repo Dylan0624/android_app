@@ -16,7 +16,8 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
     private val maxPoints = 850000
     private val pointsPerUpdate = 850000
     private val floatsPerPoint = 7
-
+    // 新增變數，預設顯示全部點數
+    var displayRatio: Float = 1.0f
     private val pointData = FloatArray(maxPoints * floatsPerPoint)
     private var numPoints = 0
     private var startPoint = 0
@@ -288,7 +289,11 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
             buffer.position(4)
             GLES20.glEnableVertexAttribArray(colorHandle)
             GLES20.glVertexAttribPointer(colorHandle, 3, GLES20.GL_FLOAT, false, stride, buffer)
-            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, numPoints)
+
+            // 根據 displayRatio 計算實際要繪製的點數
+            val displayedPoints = (numPoints * displayRatio).toInt()
+            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, displayedPoints)
+
             GLES20.glDisableVertexAttribArray(posHandle)
             GLES20.glDisableVertexAttribArray(intensityHandle)
             GLES20.glDisableVertexAttribArray(colorHandle)

@@ -155,7 +155,6 @@ class MainActivity : AppCompatActivity() {
                 renderer.setColorMode(position)
                 legendView.mode = position
             }
-
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
         colorModeLayout.addView(colorModeLabel)
@@ -171,12 +170,38 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 8, 0, 8)
         }
 
+        // 新增 SeekBar 控制點數顯示比例（0～100%）
+        val pointsRatioLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 8, 0, 8)
+        }
+        val pointsRatioLabel = TextView(this).apply {
+            text = "顯示點數比例: 100%"
+            setTextColor(android.graphics.Color.BLACK)
+        }
+        val pointsRatioSeekBar = SeekBar(this).apply {
+            max = 100
+            progress = 100
+        }
+        pointsRatioSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val ratio = progress / 100.0f
+                renderer.displayRatio = ratio
+                pointsRatioLabel.text = "顯示點數比例: ${progress}%"
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        pointsRatioLayout.addView(pointsRatioLabel)
+        pointsRatioLayout.addView(pointsRatioSeekBar)
+
         // 將所有控制項添加到側邊欄
         drawerContent.addView(axisSwitchLayout)
         drawerContent.addView(gridSwitchLayout)
         drawerContent.addView(legendSwitchLayout)
         drawerContent.addView(colorModeLayout)
         drawerContent.addView(resetButton)
+        drawerContent.addView(pointsRatioLayout)
 
         val drawerParams = DrawerLayout.LayoutParams(
             DrawerLayout.LayoutParams.WRAP_CONTENT,
