@@ -186,6 +186,18 @@ class MainActivity : AppCompatActivity() {
         val pointsRatioLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 8, 0, 8)
+            // Block DrawerLayout interception for the surrounding area
+            setOnTouchListener { v, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        drawerLayout.requestDisallowInterceptTouchEvent(true)
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        drawerLayout.requestDisallowInterceptTouchEvent(false)
+                    }
+                }
+                false // Allow child views to handle their events
+            }
         }
         val pointsRatioLabel = TextView(this).apply {
             text = "顯示點數比例: 100%"
@@ -194,16 +206,28 @@ class MainActivity : AppCompatActivity() {
         val pointsRatioSeekBar = SeekBar(this).apply {
             max = 100
             progress = 100
-        }
-        pointsRatioSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val ratio = progress / 100.0f
-                renderer.displayRatio = ratio
-                pointsRatioLabel.text = "顯示點數比例: ${progress}%"
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val ratio = progress / 100.0f
+                    renderer.displayRatio = ratio
+                    pointsRatioLabel.text = "顯示點數比例: ${progress}%"
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
+            // Explicitly block DrawerLayout interception when touching the SeekBar
+            setOnTouchListener { v, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        drawerLayout.requestDisallowInterceptTouchEvent(true)
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        drawerLayout.requestDisallowInterceptTouchEvent(false)
+                    }
+                }
+                false // Allow SeekBar's own events to proceed
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        }
         pointsRatioLayout.addView(pointsRatioLabel)
         pointsRatioLayout.addView(pointsRatioSeekBar)
         drawerContent.addView(pointsRatioLayout)
