@@ -21,10 +21,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gestureDetector: GestureDetector
     private lateinit var scaleGestureDetector: ScaleGestureDetector
     private lateinit var axisToggleButton: Button
+    private lateinit var resetButton: Button
+    private lateinit var colorModeButton: Button
+    private lateinit var legendView: LegendView
     private val updateHandler = Handler(Looper.getMainLooper())
     private var isUpdating = false
     private val executor = Executors.newSingleThreadExecutor()
-    private var lastUpdateTime = 0L // 用於計算 FPS
+    private var lastUpdateTime = 0L
 
     companion object {
         private const val TAG = "PointCloudMain"
@@ -43,11 +46,13 @@ class MainActivity : AppCompatActivity() {
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         rootLayout.addView(glSurfaceView)
 
+        // 按鈕選單區塊
         val buttonLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.TOP or Gravity.END
             setPadding(16, 16, 16, 16)
         }
+
         axisToggleButton = Button(this).apply {
             text = "座標軸: 開"
             setOnClickListener {
@@ -55,13 +60,45 @@ class MainActivity : AppCompatActivity() {
                 text = if (renderer.isAxisVisible()) "座標軸: 開" else "座標軸: 關"
             }
         }
-        val resetButton = Button(this).apply {
+
+        resetButton = Button(this).apply {
             text = "重置視圖"
             setOnClickListener { renderer.resetView() }
         }
+
+        colorModeButton = Button(this).apply {
+            text = "色彩模式: 強度"
+            setOnClickListener {
+                renderer.cycleColorMode()
+                when (renderer.getColorMode()) {
+                    0 -> {
+                        text = "色彩模式: 強度"
+                        legendView.mode = 0
+                    }
+                    1 -> {
+                        text = "色彩模式: 深度"
+                        legendView.mode = 1
+                    }
+                    2 -> {
+                        text = "色彩模式: 顏色"
+                        legendView.mode = 2  // 隱藏圖例或維持不變
+                    }
+                }
+            }
+        }
+
         buttonLayout.addView(axisToggleButton)
         buttonLayout.addView(resetButton)
+        buttonLayout.addView(colorModeButton)
         rootLayout.addView(buttonLayout)
+
+        // 新增圖例視圖，放在畫面底部
+        legendView = LegendView(this)
+        val legendLayoutParams = FrameLayout.LayoutParams(350, 100)
+        legendLayoutParams.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        legendView.layoutParams = legendLayoutParams
+        legendView.mode = renderer.getColorMode()  // 初始模式
+        rootLayout.addView(legendView)
 
         setContentView(rootLayout)
 
@@ -111,7 +148,7 @@ class MainActivity : AppCompatActivity() {
                         Log.d(TAG, "Point generation took: ${genTime}ms")
                         glSurfaceView.queueEvent { renderer.updatePoints(points) }
                     }
-                    updateHandler.postDelayed(this, 33) // 約 30 FPS
+                    updateHandler.postDelayed(this, 33)
                 }
             }
         })
