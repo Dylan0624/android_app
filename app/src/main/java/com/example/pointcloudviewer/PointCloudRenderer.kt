@@ -16,7 +16,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
     private val maxPoints = 850000
     private val pointsPerUpdate = 850000
     private val floatsPerPoint = 7
-    // 新增變數，預設顯示全部點數
     var displayRatio: Float = 1.0f
     private val pointData = FloatArray(maxPoints * floatsPerPoint)
     private var numPoints = 0
@@ -41,14 +40,12 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
 
     private val projectionMatrix = FloatArray(16)
     private val viewMatrix = FloatArray(16)
-    private val modelMatrix = FloatArray(16)
     private val mvpMatrix = FloatArray(16)
 
-    private var scaleFactor = 1.0f
-    private var rotateX = 0.0f
-    private var rotateY = 0.0f
-    private var translateX = 0.0f
-    private var translateY = 0.0f
+    private val mvpLock = Object()
+    private val latestMvpMatrix = FloatArray(16)
+
+    private val cameraController = CameraController()
 
     private var currentColorMode = 0
 
@@ -232,7 +229,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         setupPointCloud()
         setupAxisBuffers()
         setupGrid()
-        Matrix.setIdentityM(modelMatrix, 0)
         isInitialized = true
         Log.i(TAG, "Surface created, OpenGL initialized")
     }
@@ -249,15 +245,14 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         val startTime = System.currentTimeMillis()
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 5f, 0f, 0f, 0f, 0f, 1f, 0f)
-        Matrix.setIdentityM(modelMatrix, 0)
-        Matrix.translateM(modelMatrix, 0, translateX, translateY, 0f)
-        Matrix.rotateM(modelMatrix, 0, rotateX, 1f, 0f, 0f)
-        Matrix.rotateM(modelMatrix, 0, rotateY, 0f, 1f, 0f)
-        Matrix.scaleM(modelMatrix, 0, scaleFactor, scaleFactor, scaleFactor)
+
         val tempMatrix = FloatArray(16)
-        Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+        Matrix.multiplyMM(tempMatrix, 0, viewMatrix, 0, cameraController.getModelMatrix(), 0)
         Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
 
+        synchronized(mvpLock) {
+            System.arraycopy(mvpMatrix, 0, latestMvpMatrix, 0, 16)
+        }
         if (showGrid) drawGrid()
         if (isReadyToRender) drawPointCloud()
         if (showAxis) drawAxis()
@@ -290,7 +285,6 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
             GLES20.glEnableVertexAttribArray(colorHandle)
             GLES20.glVertexAttribPointer(colorHandle, 3, GLES20.GL_FLOAT, false, stride, buffer)
 
-            // 根據 displayRatio 計算實際要繪製的點數
             val displayedPoints = (numPoints * displayRatio).toInt()
             GLES20.glDrawArrays(GLES20.GL_POINTS, 0, displayedPoints)
 
@@ -431,30 +425,10 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
         gridBuffer.position(0)
     }
 
-    fun rotate(dx: Float, dy: Float) {
-        rotateX += dy / 5f
-        rotateY += dx / 5f
-    }
-
-    fun scale(factor: Float) {
-        scaleFactor *= factor
-        scaleFactor = scaleFactor.coerceIn(0.1f, 5.0f)
-    }
-
-    fun translate(dx: Float, dy: Float) {
-        translateX += dx * 0.01f / scaleFactor
-        translateY += dy * 0.01f / scaleFactor
-        translateX = translateX.coerceIn(-5f, 5f)
-        translateY = translateY.coerceIn(-5f, 5f)
-    }
-
-    fun resetView() {
-        scaleFactor = 1.0f
-        rotateX = 0f
-        rotateY = 0f
-        translateX = 0f
-        translateY = 0f
-    }
+    fun rotate(dx: Float, dy: Float) = cameraController.rotate(dx, dy)
+    fun scale(factor: Float) = cameraController.scale(factor)
+    fun translate(dx: Float, dy: Float) = cameraController.translate(dx, dy)
+    fun resetView() = cameraController.resetView()
 
     fun toggleAxis() {
         showAxis = !showAxis
@@ -478,5 +452,38 @@ class PointCloudRenderer : GLSurfaceView.Renderer {
 
     fun cycleColorMode() {
         currentColorMode = (currentColorMode + 1) % 3
+    }
+
+    fun pickPoint(screenX: Float, screenY: Float, screenWidth: Int, screenHeight: Int): FloatArray? {
+        val currentMvp = FloatArray(16)
+        synchronized(mvpLock) {
+            System.arraycopy(latestMvpMatrix, 0, currentMvp, 0, 16)
+        }
+        var minDistance = Float.MAX_VALUE
+        var pickedPoint: FloatArray? = null
+        val threshold = 30f
+        for (i in 0 until numPoints) {
+            val idx = (startPoint + i) % maxPoints
+            val base = idx * floatsPerPoint
+            val x = pointData[base]
+            val y = pointData[base + 1]
+            val z = pointData[base + 2]
+            val pointVec = floatArrayOf(x, y, z, 1f)
+            val clipVec = FloatArray(4)
+            Matrix.multiplyMV(clipVec, 0, currentMvp, 0, pointVec, 0)
+            if (clipVec[3] == 0f) continue
+            val ndcX = clipVec[0] / clipVec[3]
+            val ndcY = clipVec[1] / clipVec[3]
+            val screenXPoint = ((ndcX + 1f) / 2f) * screenWidth
+            val screenYPoint = ((1f - ndcY) / 2f) * screenHeight
+            val dx = screenX - screenXPoint
+            val dy = screenY - screenYPoint
+            val distance = dx * dx + dy * dy
+            if (distance < minDistance && distance < threshold * threshold) {
+                minDistance = distance
+                pickedPoint = pointData.copyOfRange(base, base + floatsPerPoint)
+            }
+        }
+        return pickedPoint
     }
 }

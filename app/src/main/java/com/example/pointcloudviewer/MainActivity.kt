@@ -19,6 +19,7 @@ import java.util.concurrent.Executors
 class MainActivity : AppCompatActivity() {
     private lateinit var glSurfaceView: GLSurfaceView
     private lateinit var renderer: PointCloudRenderer
+    private lateinit var pointDetailTextView: TextView
     private lateinit var gestureDetector: GestureDetector
     private lateinit var scaleGestureDetector: ScaleGestureDetector
     private lateinit var legendView: LegendView
@@ -47,6 +48,21 @@ class MainActivity : AppCompatActivity() {
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         rootLayout.addView(glSurfaceView)
 
+        pointDetailTextView = TextView(this).apply {
+            setBackgroundColor(android.graphics.Color.parseColor("#80000000"))
+            setTextColor(android.graphics.Color.WHITE)
+            textSize = 12f
+            text = ""
+        }
+        val detailLayoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        detailLayoutParams.gravity = Gravity.TOP or Gravity.END
+        detailLayoutParams.topMargin = 16
+        detailLayoutParams.rightMargin = 16
+        rootLayout.addView(pointDetailTextView, detailLayoutParams)
+
         val menuButton = Button(this).apply {
             text = "☰"
             textSize = 20f
@@ -55,12 +71,12 @@ class MainActivity : AppCompatActivity() {
                 drawerLayout.openDrawer(GravityCompat.START)
             }
         }
-
         val topLeftLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.TOP or Gravity.START
             addView(menuButton)
         }
+        rootLayout.addView(topLeftLayout)
 
         legendView = LegendView(this)
         val legendLayoutParams = FrameLayout.LayoutParams(350, 100)
@@ -69,24 +85,20 @@ class MainActivity : AppCompatActivity() {
         legendView.mode = renderer.getColorMode()
         rootLayout.addView(legendView)
 
-        rootLayout.addView(topLeftLayout)
-
-        // 自定義側邊欄佈局，添加背景顏色
         val drawerContent = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(16, 16, 16, 16)
-            setBackgroundColor(android.graphics.Color.parseColor("#FFFFFF")) // 白色背景
+            setBackgroundColor(android.graphics.Color.parseColor("#FFFFFF"))
         }
 
-        // 座標軸開關
         val axisSwitchLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, 8, 0, 8) // 添加一些垂直間距
+            setPadding(0, 8, 0, 8)
         }
         val axisLabel = TextView(this).apply {
             text = "顯示座標軸"
-            setTextColor(android.graphics.Color.BLACK) // 黑色文字
+            setTextColor(android.graphics.Color.BLACK)
         }
         val axisSwitch = Switch(this).apply {
             isChecked = true
@@ -96,8 +108,8 @@ class MainActivity : AppCompatActivity() {
         }
         axisSwitchLayout.addView(axisLabel)
         axisSwitchLayout.addView(axisSwitch)
+        drawerContent.addView(axisSwitchLayout)
 
-        // 網格開關
         val gridSwitchLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -115,8 +127,8 @@ class MainActivity : AppCompatActivity() {
         }
         gridSwitchLayout.addView(gridLabel)
         gridSwitchLayout.addView(gridSwitch)
+        drawerContent.addView(gridSwitchLayout)
 
-        // 圖例開關
         val legendSwitchLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -134,8 +146,8 @@ class MainActivity : AppCompatActivity() {
         }
         legendSwitchLayout.addView(legendLabel)
         legendSwitchLayout.addView(legendSwitch)
+        drawerContent.addView(legendSwitchLayout)
 
-        // 色彩模式下拉列表
         val colorModeLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -159,8 +171,8 @@ class MainActivity : AppCompatActivity() {
         }
         colorModeLayout.addView(colorModeLabel)
         colorModeLayout.addView(colorModeSpinner)
+        drawerContent.addView(colorModeLayout)
 
-        // 重置視圖按鈕
         val resetButton = Button(this).apply {
             text = "重置視圖"
             setOnClickListener {
@@ -169,8 +181,8 @@ class MainActivity : AppCompatActivity() {
             }
             setPadding(0, 8, 0, 8)
         }
+        drawerContent.addView(resetButton)
 
-        // 新增 SeekBar 控制點數顯示比例（0～100%）
         val pointsRatioLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 8, 0, 8)
@@ -194,13 +206,6 @@ class MainActivity : AppCompatActivity() {
         })
         pointsRatioLayout.addView(pointsRatioLabel)
         pointsRatioLayout.addView(pointsRatioSeekBar)
-
-        // 將所有控制項添加到側邊欄
-        drawerContent.addView(axisSwitchLayout)
-        drawerContent.addView(gridSwitchLayout)
-        drawerContent.addView(legendSwitchLayout)
-        drawerContent.addView(colorModeLayout)
-        drawerContent.addView(resetButton)
         drawerContent.addView(pointsRatioLayout)
 
         val drawerParams = DrawerLayout.LayoutParams(
@@ -251,6 +256,26 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "onDoubleTap triggered")
                 renderer.resetView()
                 return true
+            }
+
+            override fun onLongPress(e: MotionEvent) {
+                val touchX = e.x
+                val touchY = e.y
+                glSurfaceView.queueEvent {
+                    val pickedPoint = renderer.pickPoint(touchX, touchY, glSurfaceView.width, glSurfaceView.height)
+                    runOnUiThread {
+                        if (pickedPoint != null) {
+                            val detailText = "位置: (%.2f, %.2f, %.2f)\n法向量: (%.2f, %.2f, %.2f)\n強度: %.2f".format(
+                                pickedPoint[0], pickedPoint[1], pickedPoint[2],
+                                pickedPoint[4], pickedPoint[5], pickedPoint[6],
+                                pickedPoint[3]
+                            )
+                            pointDetailTextView.text = detailText
+                        } else {
+                            pointDetailTextView.text = "未選取到點"
+                        }
+                    }
+                }
             }
         })
 
