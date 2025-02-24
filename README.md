@@ -1,135 +1,53 @@
-<<<<<<< HEAD
-# StellarApp
+# Point Cloud Viewer
 
-
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin http://172.18.255.90/dylan_lin/stellarapp.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](http://172.18.255.90/dylan_lin/stellarapp/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
-=======
-# 點雲觀測器 Point Cloud Viewer
-
-基於 Android OpenGL 的即時 3D 點雲視覺化應用程式，可模擬 LiDAR 點雲數據。
+基於 Android OpenGL 的即時 3D 點雲視覺化應用程式，提供流暢的 LiDAR 點雲數據模擬與互動式顯示功能。
 
 ## 功能特色
 
-- 即時 3D 點雲視覺化
-- 模擬 16 線 LiDAR 感測器數據
+- 即時 3D 點雲視覺化與渲染
+- 模擬 16 線 LiDAR 感測器數據生成
 - 互動式 3D 視角控制：
-    - 雙指縮放
-    - 單指旋轉
+    - 雙指縮放（放大/縮小）
+    - 單指拖曳（旋轉視角）
     - 雙擊重置視圖
-- 座標軸切換
-- 支援最多 500 萬個點
+- 可切換座標軸顯示
+- 支援高達 85 萬個點的即時渲染
 - 灰階強度視覺化
-- 漸進式點雲載入
+- 流暢的點雲更新（約 30 FPS）
+- 效能優化的漸進式點雲載入
 
-## 技術細節
+## 技術規格
 
 ### 點雲生成
-- 模擬 16 線 LiDAR 感測器
-- 生成點雲數據：
-    - XYZ 座標
-    - 強度值 (128-255)
+- 模擬 16 線 LiDAR 感測器特性
+- 生成點雲數據屬性：
+    - XYZ 三維座標
+    - 強度值範圍：128-255
     - 垂直角度範圍：-15° 至 15°
-    - 360° 水平覆蓋
+    - 水平角度範圍：0° 至 360°
+- 每次更新 85 萬個點
+- 最大點雲容量：85 萬點
 
-### 渲染
-- OpenGL ES 2.0
-- 自定義頂點和片段著色器
-- 基於點的渲染與強度著色
-- 座標軸視覺化
+### 渲染技術
+- OpenGL ES 2.0 架構
+- 自定義著色器程序：
+    - 頂點著色器：支援 MVP 矩陣變換
+    - 片段著色器：灰階強度視覺化
+- 高效能點雲渲染
+- 座標軸視覺化系統
 
-### 效能
-- 漸進式載入點雲（每次更新 50,000 個點）
-- 最大容量：500 萬個點
-- 高效的頂點緩衝區管理
-- 優化的矩陣轉換
+### 效能優化
+- 高效率的頂點緩衝區管理
+- 優化的矩陣運算
+- 背景執行緒點雲生成
+- 高效能的記憶體管理
+
+## 系統需求
+
+- Android 4.4 (API level 19) 或更高版本
+- 支援 OpenGL ES 2.0 的設備
+- 觸控螢幕支援
+- 建議至少 2GB RAM
 
 ## 專案結構
 
@@ -138,54 +56,99 @@ app/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/example/pointcloudviewer/
-│   │   │   ├── MainActivity.kt         # 主要 UI 與互動處理
-│   │   │   ├── PointCloudRenderer.kt   # OpenGL 渲染實現
+│   │   │   ├── MainActivity.kt         # 主要活動與使用者互動
+│   │   │   ├── PointCloudRenderer.kt   # OpenGL 渲染實作
 │   │   │   └── LidarPoint.kt          # 點雲數據模型
 │   │   └── res/
 │   │       └── layout/
-│   │           └── activity_main.xml   # 主要活動布局
+│   │           └── activity_main.xml   # 主要介面布局
 ├── build.gradle
 └── README.md
 ```
 
-## 安裝與建置
-
-1. 複製專案儲存庫
-2. 在 Android Studio 中開啟專案
-3. 在支援 OpenGL ES 2.0 的裝置上建置並運行
-
 ## 使用說明
 
+### 基本操作
 1. 啟動應用程式
-2. 點雲將開始漸進式載入
-3. 與視覺化互動：
-    - 單指拖曳旋轉視圖
-    - 雙指縮放
-    - 雙擊重置視圖
-4. 使用「座標軸」按鈕切換座標軸顯示
-5. 使用「重置視圖」按鈕重置視角
+2. 等待點雲開始載入（約 2 秒）
+3. 使用手勢控制視角：
+    - 單指拖曳：旋轉視圖
+    - 雙指縮放：調整大小
+    - 雙擊：重置視圖
+4. 使用介面按鈕：
+    - 「座標軸」：切換座標軸顯示
+    - 「重置視圖」：重置視角位置
 
-## 系統需求
+### 性能注意事項
+- 應用程式運行時會持續更新點雲
+- 每次更新約 85 萬個點
+- 目標幀率為 30 FPS
+- 暫停應用程式會停止點雲更新
+- 恢復應用程式會在 2 秒後重新開始更新
 
-- Android 4.4 (API level 19) 或更高版本
-- 支援 OpenGL ES 2.0
-- 支援觸控螢幕的裝置
+## 開發環境設置
+
+1. 複製專案儲存庫
+```bash
+git clone <repository-url>
+```
+
+2. 使用 Android Studio 開啟專案
+
+3. 確認開發環境需求：
+    - Android Studio Arctic Fox 或更新版本
+    - Android SDK Platform 19 或更高版本
+    - Android Build Tools 30.0.3 或更新版本
+
+4. 建置與運行：
+    - 選擇支援 OpenGL ES 2.0 的目標設備
+    - 點擊「Run」執行應用程式
 
 ## 相依套件
 
-- AndroidX Core 和 AppCompat 程式庫
-- OpenGL ES 2.0
-- Kotlin 運行環境
+- AndroidX Core KTX
+- AndroidX AppCompat
+- Android OpenGL ES API
+- Kotlin Standard Library
 
-## 授權條款
+## 疑難排解
 
-本專案採用 MIT 授權條款 - 詳見 LICENSE 檔案
+### 常見問題
+1. 畫面空白或無法顯示點雲
+    - 確認設備支援 OpenGL ES 2.0
+    - 檢查是否有足夠的系統資源
 
-## 參與貢獻
+2. 效能問題
+    - 確認設備記憶體使用狀況
+    - 檢查背景程式使用狀況
+    - 考慮降低點雲更新頻率
+
+### 錯誤報告
+如遇到問題，請提供以下資訊：
+- 設備型號與 Android 版本
+- 錯誤發生時的操作步驟
+- Logcat 錯誤訊息
+
+## 貢獻指南
 
 1. Fork 專案儲存庫
 2. 建立功能分支
 3. 提交更改
 4. 推送至分支
 5. 建立新的 Pull Request
->>>>>>> 914e10e (Initial commit)
+
+## 授權條款
+
+本專案採用 MIT 授權條款 - 詳見 LICENSE 檔案
+
+## 作者
+
+[Dylan_Lin/PEGA]
+
+## 更新記錄
+
+### 1.0.0 (2024-02-24)
+- 初始版本發布
+- 基本點雲視覺化功能
+- 互動式控制實作
+- 效能優化
