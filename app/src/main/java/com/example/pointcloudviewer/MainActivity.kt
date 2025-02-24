@@ -5,16 +5,15 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Gravity
+import android.view.MotionEvent
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import android.opengl.GLSurfaceView
 import android.view.GestureDetector
-import android.view.Gravity
-import android.view.MotionEvent
 import android.view.ScaleGestureDetector
-import android.widget.FrameLayout
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.material.navigation.NavigationView
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
@@ -24,14 +23,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scaleGestureDetector: ScaleGestureDetector
     private lateinit var legendView: LegendView
     private lateinit var drawerLayout: DrawerLayout
-    private lateinit var navigationView: NavigationView
     private val updateHandler = Handler(Looper.getMainLooper())
     private var isUpdating = false
     private val executor = Executors.newSingleThreadExecutor()
     private var lastUpdateTime = 0L
-    private var showAxisEnabled = true
-    private var showGridEnabled = true
-    private var showLegendEnabled = true
 
     companion object {
         private const val TAG = "PointCloudMain"
@@ -52,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         rootLayout.addView(glSurfaceView)
 
-        val menuButton = android.widget.Button(this).apply {
+        val menuButton = Button(this).apply {
             text = "☰"
             textSize = 20f
             setPadding(16, 16, 16, 16)
@@ -61,8 +56,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val topLeftLayout = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.HORIZONTAL
+        val topLeftLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.TOP or Gravity.START
             addView(menuButton)
         }
@@ -76,22 +71,126 @@ class MainActivity : AppCompatActivity() {
 
         rootLayout.addView(topLeftLayout)
 
-        navigationView = NavigationView(this)
-        setupNavigationMenu()
-        val navParams = DrawerLayout.LayoutParams(
+        // 自定義側邊欄佈局，添加背景顏色
+        val drawerContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 16, 16, 16)
+            setBackgroundColor(android.graphics.Color.parseColor("#FFFFFF")) // 白色背景
+        }
+
+        // 座標軸開關
+        val axisSwitchLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 8, 0, 8) // 添加一些垂直間距
+        }
+        val axisLabel = TextView(this).apply {
+            text = "顯示座標軸"
+            setTextColor(android.graphics.Color.BLACK) // 黑色文字
+        }
+        val axisSwitch = Switch(this).apply {
+            isChecked = true
+            setOnCheckedChangeListener { _, isChecked ->
+                renderer.setAxisVisibility(isChecked)
+            }
+        }
+        axisSwitchLayout.addView(axisLabel)
+        axisSwitchLayout.addView(axisSwitch)
+
+        // 網格開關
+        val gridSwitchLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 8, 0, 8)
+        }
+        val gridLabel = TextView(this).apply {
+            text = "顯示網格"
+            setTextColor(android.graphics.Color.BLACK)
+        }
+        val gridSwitch = Switch(this).apply {
+            isChecked = true
+            setOnCheckedChangeListener { _, isChecked ->
+                renderer.setGridVisibility(isChecked)
+            }
+        }
+        gridSwitchLayout.addView(gridLabel)
+        gridSwitchLayout.addView(gridSwitch)
+
+        // 圖例開關
+        val legendSwitchLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 8, 0, 8)
+        }
+        val legendLabel = TextView(this).apply {
+            text = "顯示圖例"
+            setTextColor(android.graphics.Color.BLACK)
+        }
+        val legendSwitch = Switch(this).apply {
+            isChecked = true
+            setOnCheckedChangeListener { _, isChecked ->
+                legendView.visibility = if (isChecked) android.view.View.VISIBLE else android.view.View.GONE
+            }
+        }
+        legendSwitchLayout.addView(legendLabel)
+        legendSwitchLayout.addView(legendSwitch)
+
+        // 色彩模式下拉列表
+        val colorModeLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 8, 0, 8)
+        }
+        val colorModeLabel = TextView(this).apply {
+            text = "色彩模式"
+            setTextColor(android.graphics.Color.BLACK)
+        }
+        val colorModeSpinner = Spinner(this)
+        val colorModes = arrayOf("強度", "深度", "顏色")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, colorModes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        colorModeSpinner.adapter = adapter
+        colorModeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
+                renderer.setColorMode(position)
+                legendView.mode = position
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+        colorModeLayout.addView(colorModeLabel)
+        colorModeLayout.addView(colorModeSpinner)
+
+        // 重置視圖按鈕
+        val resetButton = Button(this).apply {
+            text = "重置視圖"
+            setOnClickListener {
+                renderer.resetView()
+                drawerLayout.closeDrawer(GravityCompat.START)
+            }
+            setPadding(0, 8, 0, 8)
+        }
+
+        // 將所有控制項添加到側邊欄
+        drawerContent.addView(axisSwitchLayout)
+        drawerContent.addView(gridSwitchLayout)
+        drawerContent.addView(legendSwitchLayout)
+        drawerContent.addView(colorModeLayout)
+        drawerContent.addView(resetButton)
+
+        val drawerParams = DrawerLayout.LayoutParams(
             DrawerLayout.LayoutParams.WRAP_CONTENT,
             DrawerLayout.LayoutParams.MATCH_PARENT
         )
-        navParams.gravity = Gravity.START
-        navigationView.layoutParams = navParams
+        drawerParams.gravity = Gravity.START
+        drawerContent.layoutParams = drawerParams
 
         drawerLayout.addView(rootLayout)
-        drawerLayout.addView(navigationView)
+        drawerLayout.addView(drawerContent)
         setContentView(drawerLayout)
 
         setupGestureDetectors()
 
-        // 將觸摸事件直接設置給 GLSurfaceView
         glSurfaceView.setOnTouchListener { _, event ->
             val scaleHandled = scaleGestureDetector.onTouchEvent(event)
             val gestureHandled = gestureDetector.onTouchEvent(event)
@@ -103,63 +202,6 @@ class MainActivity : AppCompatActivity() {
             startPointUpdates()
             Log.i(TAG, "Point updates started after 2s delay")
         }, 2000)
-    }
-
-    private fun setupNavigationMenu() {
-        val menu = navigationView.menu
-        menu.add(android.view.Menu.NONE, 1, android.view.Menu.NONE, "顯示座標軸").setCheckable(true).isChecked = true
-        menu.add(android.view.Menu.NONE, 2, android.view.Menu.NONE, "顯示網格").setCheckable(true).isChecked = true
-        menu.add(android.view.Menu.NONE, 3, android.view.Menu.NONE, "顯示圖例").setCheckable(true).isChecked = true
-        menu.add(android.view.Menu.NONE, 4, android.view.Menu.NONE, "色彩模式: 強度").setCheckable(true).isChecked = true
-        menu.add(android.view.Menu.NONE, 5, android.view.Menu.NONE, "色彩模式: 深度").setCheckable(true).isChecked = false
-        menu.add(android.view.Menu.NONE, 6, android.view.Menu.NONE, "色彩模式: 顏色").setCheckable(true).isChecked = false
-        menu.add(android.view.Menu.NONE, 7, android.view.Menu.NONE, "重置視圖")
-
-        navigationView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                1 -> {
-                    showAxisEnabled = !showAxisEnabled
-                    menuItem.isChecked = showAxisEnabled
-                    renderer.setAxisVisibility(showAxisEnabled)
-                }
-                2 -> {
-                    showGridEnabled = !showGridEnabled
-                    menuItem.isChecked = showGridEnabled
-                    renderer.setGridVisibility(showGridEnabled)
-                }
-                3 -> {
-                    showLegendEnabled = !showLegendEnabled
-                    menuItem.isChecked = showLegendEnabled
-                    legendView.visibility = if (showLegendEnabled) android.view.View.VISIBLE else android.view.View.GONE
-                }
-                4 -> {
-                    renderer.setColorMode(0)
-                    menuItem.isChecked = true
-                    menu.findItem(5).isChecked = false
-                    menu.findItem(6).isChecked = false
-                    legendView.mode = 0
-                }
-                5 -> {
-                    renderer.setColorMode(1)
-                    menuItem.isChecked = true
-                    menu.findItem(4).isChecked = false
-                    menu.findItem(6).isChecked = false
-                    legendView.mode = 1
-                }
-                6 -> {
-                    renderer.setColorMode(2)
-                    menuItem.isChecked = true
-                    menu.findItem(4).isChecked = false
-                    menu.findItem(5).isChecked = false
-                    legendView.mode = 2
-                }
-                7 -> {
-                    renderer.resetView()
-                }
-            }
-            drawerLayout.closeDrawer(GravityCompat.START)
-            true
-        }
     }
 
     private fun setupGestureDetectors() {
@@ -222,7 +264,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // 這裡僅作為備用，實際觸摸事件由 GLSurfaceView 處理
         return super.onTouchEvent(event)
     }
 
